@@ -64,6 +64,7 @@ model Client {
   name       String
   properties Property[]
   createdAt  DateTime    @default(now())
+  maintenanceRequests MaintenanceRequest[]
 }
 
 model Property {
