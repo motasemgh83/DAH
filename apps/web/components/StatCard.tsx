@@ -1,0 +1,1 @@
+export function StatCard({ label, value, subtext }: { label:string; value:string|number; subtext?:string; }){ return <div className="card"><div className="muted">{label}</div><h2>{value}</h2>{subtext ? <div className="muted">{subtext}</div> : null}</div>; }

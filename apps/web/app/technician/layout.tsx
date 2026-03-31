@@ -1,0 +1,1 @@
+import { ArabicNav } from '@/components/ArabicNav'; export default function TechnicianLayout({ children }:{ children:React.ReactNode }){ return <div className="layout rtl"><ArabicNav /><div className="content rtl">{children}</div></div>; }

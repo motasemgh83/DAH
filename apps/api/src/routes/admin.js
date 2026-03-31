@@ -1,0 +1,1 @@
+const router=require('express').Router(); const { adminOverview }=require('../controllers/adminController'); const { authRequired, requirePermission }=require('../middleware/auth'); router.get('/overview', authRequired, requirePermission('users:view'), adminOverview); module.exports=router;

@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    container_name: daralhai-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: daralhai
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5432:5432"]
+    volumes:
+      - daralhai-postgres:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: daralhai-api
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/daralhai?schema=public
+      JWT_SECRET: super-secret-jwt-key
+      API_PORT: 4000
+    depends_on: [db]
+    ports: ["4000:4000"]
+    command: sh -c "npx prisma generate && node src/index.js"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: daralhai-web
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    depends_on: [api]
+    ports: ["3000:3000"]
+    command: sh -c "npm run dev"
+
+volumes:
+  daralhai-postgres:

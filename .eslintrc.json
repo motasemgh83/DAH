@@ -1,0 +1,17 @@
+{
+  "root": true,
+  "ignorePatterns": ["**/node_modules/**", "**/.next/**", "**/dist/**"],
+  "overrides": [
+    {
+      "files": ["apps/api/**/*.js", "packages/shared/**/*.js"],
+      "env": { "node": true, "es2022": true, "jest": true },
+      "extends": ["eslint:recommended"],
+      "parserOptions": { "ecmaVersion": 2022 },
+      "rules": { "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }] }
+    },
+    {
+      "files": ["apps/web/**/*.{ts,tsx}"],
+      "extends": ["next/core-web-vitals"]
+    }
+  ]
+}

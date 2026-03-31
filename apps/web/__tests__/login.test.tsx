@@ -1,0 +1,1 @@
+import { render, screen } from '@testing-library/react'; import LoginPage from '../app/login/page'; describe('LoginPage',()=>{ it('renders sign in form',()=>{ render(<LoginPage />); expect(screen.getByText('Sign in')).toBeInTheDocument(); }); });

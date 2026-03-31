@@ -1,0 +1,1 @@
+const router=require('express').Router(); const c=require('../controllers/inventoryController'); const { authRequired, requirePermission }=require('../middleware/auth'); router.get('/', authRequired, requirePermission('inventory:view'), c.listInventory); module.exports=router;

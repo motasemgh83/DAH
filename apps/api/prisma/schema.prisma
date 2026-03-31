@@ -1,0 +1,355 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPERADMIN
+  MANAGER
+  SUPERVISOR
+  TECHNICIAN
+}
+
+enum RequestStatus {
+  NEW
+  AWAITING_APPROVAL
+  APPROVED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  REOPENED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum WorkOrderStatus {
+  OPEN
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+}
+
+model User {
+  id           String               @id @default(cuid())
+  email        String               @unique
+  name         String
+  passwordHash String
+  role         Role
+  locale       String               @default("en")
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  requests     MaintenanceRequest[] @relation("AssignedTechnician")
+  workOrders   WorkOrder[]          @relation("TechnicianWorkOrders")
+  notifications Notification[]
+  comments     Comment[]
+  approvals    Approval[]
+  auditLogs    AuditLog[]
+  costEntries  CostEntry[]
+}
+
+model Client {
+  id         String      @id @default(cuid())
+  name       String
+  properties Property[]
+  createdAt  DateTime    @default(now())
+}
+
+model Property {
+  id        String   @id @default(cuid())
+  name      String
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  branches  Branch[]
+  createdAt DateTime @default(now())
+}
+
+model Branch {
+  id         String   @id @default(cuid())
+  name       String
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  units      Unit[]
+  createdAt  DateTime @default(now())
+}
+
+model Unit {
+  id        String               @id @default(cuid())
+  name      String
+  branchId  String
+  branch    Branch               @relation(fields: [branchId], references: [id])
+  assets    Asset[]
+  requests  MaintenanceRequest[]
+  createdAt DateTime             @default(now())
+}
+
+model Asset {
+  id                 String                 @id @default(cuid())
+  assetCode          String                 @unique
+  name               String
+  serviceCategoryId  String?
+  serviceCategory    ServiceCategory?       @relation(fields: [serviceCategoryId], references: [id])
+  unitId             String
+  unit               Unit                   @relation(fields: [unitId], references: [id])
+  status             String                 @default("ACTIVE")
+  preventivePlans    PreventivePlan[]
+  requests           MaintenanceRequest[]
+  tags               AssetTag[]
+  createdAt          DateTime               @default(now())
+}
+
+model InventoryItem {
+  id          String      @id @default(cuid())
+  sku         String      @unique
+  name        String
+  quantity    Int         @default(0)
+  minQuantity Int         @default(0)
+  unitCost    Float       @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  costEntries CostEntry[]
+}
+
+model ServiceCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  assets    Asset[]
+  requests  MaintenanceRequest[]
+  createdAt DateTime @default(now())
+}
+
+model Tag {
+  id        String               @id @default(cuid())
+  name      String               @unique
+  requests  MaintenanceRequestTag[]
+  assets    AssetTag[]
+}
+
+model MaintenanceRequest {
+  id                String                   @id @default(cuid())
+  requestNo         String                   @unique
+  title             String
+  description       String
+  status            RequestStatus            @default(NEW)
+  priority          Priority                 @default(MEDIUM)
+  clientId          String?
+  client            Client?                  @relation(fields: [clientId], references: [id])
+  unitId            String?
+  unit              Unit?                    @relation(fields: [unitId], references: [id])
+  assetId           String?
+  asset             Asset?                   @relation(fields: [assetId], references: [id])
+  serviceCategoryId String?
+  serviceCategory   ServiceCategory?         @relation(fields: [serviceCategoryId], references: [id])
+  requestedByName   String
+  requestedByPhone  String?
+  assignedToId      String?
+  assignedTo        User?                    @relation("AssignedTechnician", fields: [assignedToId], references: [id])
+  dueAt             DateTime?
+  responseDueAt     DateTime?
+  resolutionDueAt   DateTime?
+  reopenCount       Int                      @default(0)
+  isEscalated       Boolean                  @default(false)
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  workOrders        WorkOrder[]
+  comments          Comment[]
+  attachments       Attachment[]
+  approvals         Approval[]
+  tags              MaintenanceRequestTag[]
+  customFieldValues RequestCustomFieldValue[]
+  notifications     Notification[]
+  costEntries       CostEntry[]
+}
+
+model WorkOrder {
+  id             String          @id @default(cuid())
+  workOrderNo    String          @unique
+  requestId      String
+  request        MaintenanceRequest @relation(fields: [requestId], references: [id])
+  title          String
+  status         WorkOrderStatus @default(OPEN)
+  technicianId   String?
+  technician     User?           @relation("TechnicianWorkOrders", fields: [technicianId], references: [id])
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+  actualStart    DateTime?
+  actualEnd      DateTime?
+  checklistJson  Json?
+  estimatedCost  Float           @default(0)
+  actualCost     Float           @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  costEntries    CostEntry[]
+}
+
+model PreventivePlan {
+  id            String   @id @default(cuid())
+  title         String
+  assetId       String
+  asset         Asset    @relation(fields: [assetId], references: [id])
+  frequencyDays Int
+  nextDueAt     DateTime
+  checklistJson Json?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id])
+  requestId String?
+  request   MaintenanceRequest? @relation(fields: [requestId], references: [id])
+  title     String
+  message   String
+  isRead    Boolean             @default(false)
+  createdAt DateTime            @default(now())
+}
+
+model Attachment {
+  id         String             @id @default(cuid())
+  requestId  String
+  request    MaintenanceRequest @relation(fields: [requestId], references: [id])
+  fileName   String
+  url        String
+  uploadedBy String
+  createdAt  DateTime           @default(now())
+}
+
+model Comment {
+  id         String             @id @default(cuid())
+  requestId  String
+  request    MaintenanceRequest @relation(fields: [requestId], references: [id])
+  authorId   String
+  author     User               @relation(fields: [authorId], references: [id])
+  content    String
+  isInternal Boolean            @default(true)
+  createdAt  DateTime           @default(now())
+}
+
+model Approval {
+  id         String             @id @default(cuid())
+  requestId  String
+  request    MaintenanceRequest @relation(fields: [requestId], references: [id])
+  approverId String
+  approver   User               @relation(fields: [approverId], references: [id])
+  decision   String
+  notes      String?
+  createdAt  DateTime           @default(now())
+}
+
+model SlaPolicy {
+  id                String   @id @default(cuid())
+  name              String
+  priority          Priority
+  responseMinutes   Int
+  resolutionMinutes Int
+  createdAt         DateTime @default(now())
+}
+
+model EscalationRule {
+  id               String   @id @default(cuid())
+  name             String
+  priority         Priority
+  thresholdMinutes Int
+  notifyRole       Role
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+}
+
+model KPIRecord {
+  id          String   @id @default(cuid())
+  metricKey   String
+  metricValue Float
+  recordedAt  DateTime @default(now())
+}
+
+model CostEntry {
+  id              String              @id @default(cuid())
+  title           String
+  amount          Float
+  requestId       String?
+  request         MaintenanceRequest? @relation(fields: [requestId], references: [id])
+  workOrderId     String?
+  workOrder       WorkOrder?          @relation(fields: [workOrderId], references: [id])
+  inventoryItemId String?
+  inventoryItem   InventoryItem?      @relation(fields: [inventoryItemId], references: [id])
+  createdById     String
+  createdBy       User                @relation(fields: [createdById], references: [id])
+  createdAt       DateTime            @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String
+  entityType String
+  entityId   String?
+  details    Json?
+  createdAt  DateTime @default(now())
+}
+
+model CompanySetting {
+  id               String   @id
+  companyName      String
+  timezone         String   @default("Asia/Kuwait")
+  defaultLocale    String   @default("en")
+  technicianLocale String   @default("ar")
+  workingHoursJson Json
+  holidaysJson     Json
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model CustomStatusDefinition {
+  id         String  @id @default(cuid())
+  entityType String
+  key        String
+  label      String
+  isActive   Boolean @default(true)
+}
+
+model CustomFieldDefinition {
+  id         String  @id @default(cuid())
+  entityType String
+  key        String
+  label      String
+  fieldType  String
+  required   Boolean @default(false)
+}
+
+model RequestCustomFieldValue {
+  id                String             @id @default(cuid())
+  requestId         String
+  request           MaintenanceRequest @relation(fields: [requestId], references: [id])
+  fieldDefinitionId String
+  value             String
+}
+
+model MaintenanceRequestTag {
+  requestId String
+  tagId     String
+  request   MaintenanceRequest @relation(fields: [requestId], references: [id])
+  tag       Tag                @relation(fields: [tagId], references: [id])
+  @@id([requestId, tagId])
+}
+
+model AssetTag {
+  assetId String
+  tagId   String
+  asset   Asset @relation(fields: [assetId], references: [id])
+  tag     Tag   @relation(fields: [tagId], references: [id])
+  @@id([assetId, tagId])
+}

@@ -1,0 +1,1 @@
+import Link from 'next/link'; const links=[['/technician','الرئيسية'],['/technician/requests','الطلبات'],['/technician/work-orders','أوامر العمل']]; export function ArabicNav(){ return <aside className="sidebar rtl"><h2>نظام الفني</h2><p className="muted">واجهة الفني باللغة العربية</p><nav>{links.map(([href,label])=><Link key={href} href={href}>{label}</Link>)}</nav></aside>; }

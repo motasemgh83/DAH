@@ -1,0 +1,6 @@
+const prisma = require('../prisma');
+const { companySettingSchema } = require('../validation/schemas');
+async function getCompanySettings(req,res,next){ try{ const company=await prisma.companySetting.findFirst(); const [customStatuses, customFields, serviceCategories, escalationRules, slaPolicies]=await Promise.all([prisma.customStatusDefinition.findMany(), prisma.customFieldDefinition.findMany(), prisma.serviceCategory.findMany(), prisma.escalationRule.findMany(), prisma.slaPolicy.findMany()]); res.json({ data:{ company, customStatuses, customFields, serviceCategories, escalationRules, slaPolicies } }); }catch(error){ next(error);} }
+async function updateCompanySettings(req,res,next){ try{ const payload=companySettingSchema.parse(req.body); const existing=await prisma.companySetting.findFirst(); const data= existing ? await prisma.companySetting.update({ where:{ id:existing.id }, data:payload }) : await prisma.companySetting.create({ data:{ id:'company-default', ...payload } }); res.json({ data }); }catch(error){ next(error);} }
+async function getCalendarSettings(req,res,next){ try{ const company=await prisma.companySetting.findFirst(); res.json({ data:{ workingHours:company?.workingHoursJson || {}, holidays:company?.holidaysJson || [] } }); }catch(error){ next(error);} }
+module.exports={ getCompanySettings, updateCompanySettings, getCalendarSettings };
