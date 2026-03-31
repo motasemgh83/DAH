@@ -10,7 +10,9 @@
     "format": "prettier --write .",
     "seed": "npm run seed -w apps/api",
     "prisma:generate": "npm run prisma:generate -w apps/api",
-    "prisma:migrate": "npm run prisma:migrate -w apps/api"
+    "prisma:migrate": "npm run prisma:migrate -w apps/api",
+    "render:build:api": "npm install && npm run prisma:generate --workspace=apps/api && npm run prisma:migrate --workspace=apps/api",
+"render:start:api": "npm run start --workspace=apps/api"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",
