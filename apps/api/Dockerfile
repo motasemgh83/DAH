@@ -16,4 +16,4 @@ WORKDIR /app/apps/api
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run seed --workspace=apps/api && node src/index.js"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run seed || true; node src/index.js"]
